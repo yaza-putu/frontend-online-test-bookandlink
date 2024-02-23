@@ -7,6 +7,8 @@ import axios from "axios";
 export default function Home() {
     const [socket, setSocket] = useState(null);
     const [rows, setRows] = useState([])
+    const [workerLog, setWorkerLog] = useState("")
+    var tmpText = ""
     const [count, setCount] = useState({
         pending : 0,
         done : 0,
@@ -34,6 +36,13 @@ export default function Home() {
 
             if (receive.event == "update_table") {
                 setRows(receive.data.rows)
+            }
+
+            if(receive.event == "worker_log") {
+                tmpText += receive.data +" \n "
+                setWorkerLog(tmpText)
+                let textarea = document.getElementById('message');
+                textarea.scrollTop = textarea.scrollHeight;
             }
 
         }
@@ -94,6 +103,8 @@ export default function Home() {
                             </span>
                        </button>
                    </div>
+
+                   <textarea id="message" value={workerLog} rows="4" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Log activity job..."></textarea>
 
                     {/* queue monitor   */}
                     <QueueMonitor data={rows}></QueueMonitor>
