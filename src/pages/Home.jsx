@@ -6,7 +6,14 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 export default function Home() {
     const [socket, setSocket] = useState(null);
+    const [connStatus, setConnStatus] = useState(false)
     const [rows, setRows] = useState([])
+    const [pagination, setPagination] = useState({
+        limit: 10,
+        page:1,
+        total_pages : 0,
+        total_rows : 0
+    })
     const [workerLog, setWorkerLog] = useState("")
     var tmpText = ""
     const [count, setCount] = useState({
@@ -21,6 +28,7 @@ export default function Home() {
 
         newSocket.onopen = () => {
             console.log("Client connected!");
+            setConnStatus(true)
         }
 
         newSocket.onmessage = (event) => {
@@ -36,6 +44,12 @@ export default function Home() {
 
             if (receive.event == "update_table") {
                 setRows(receive.data.rows)
+                setPagination({
+                    limit: receive.data.limit,
+                    page:receive.data.page,
+                    total_pages : receive.data.total_pages,
+                    total_rows : receive.data.total_rows
+                })
             }
 
             if(receive.event == "worker_log") {
@@ -49,11 +63,11 @@ export default function Home() {
 
         newSocket.onclose = () => {
             console.log("Client disconnected!");
+            setConnStatus(false)
         }
 
         return () => newSocket.close();
     }, [])
-
 
     const excePendingJob = () => {
         axios.get("/api/v1/queue/check")
@@ -70,6 +84,11 @@ export default function Home() {
            <div className="flex">
                <Sidebar></Sidebar>
                <div className="w-full p-2">
+                    <span className="inline-flex mb-2 items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                        {
+                            connStatus ? (<><span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>Connected</>) : (<><span className="w-2 h-2 me-1 bg-orange-600 rounded-full"></span>Waiting connection wss...</>)
+                        }
+                    </span>
                    {/* card counter*/}
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                        <div className="bg-white p-6 rounded-lg shadow-md">
@@ -107,7 +126,7 @@ export default function Home() {
                    <textarea id="message" value={workerLog} rows="4" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Log activity job..."></textarea>
 
                     {/* queue monitor   */}
-                    <QueueMonitor data={rows}></QueueMonitor>
+                    <QueueMonitor data={rows} pagination={pagination} wss={socket}></QueueMonitor>
                </div>
            </div>
        </>

@@ -4,7 +4,7 @@ import axios from "axios";
 export default function JobInput() {
 
     const [form, setForm] = useState({
-        total_jobs : 0
+        total_jobs : 1000
     })
 
     const handleSubmit = (e) => {
